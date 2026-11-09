@@ -1013,7 +1013,13 @@ img.bleed{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
   font-family:'Merriweather',serif; font-style:italic; color:var(--ink); font-size:clamp(.92rem,1.6vw,1.1rem);}
 
 
-/* Color Clash + Jelly Bean Jar (ch15_review.py) */
+/* Odd One Out + Jelly Bean Jar (ch15_review.py) */
+.ox-grid{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.45rem; width:min(30rem,100%); padding:.5rem; border-radius:14px; transition:box-shadow .15s;}
+.ox-grid.demo{width:min(16rem,100%); gap:.25rem; padding:0;} .ox-grid.demo .ox-cell{font-size:1.15rem; padding:.15rem 0; box-shadow:none; cursor:default;}
+.ox-grid.fb-ok{box-shadow:0 0 0 4px rgba(63,127,58,.35);} .ox-grid.fb-no{box-shadow:0 0 0 4px rgba(184,50,42,.35);}
+.ox-cell{display:flex; align-items:center; justify-content:center; font:700 clamp(1.5rem,3vw,2.3rem)/1 'Merriweather',Georgia,serif; color:#2a2621;
+  background:#fffaf0; border:1.5px solid rgba(42,38,33,.5); border-radius:10px; padding:.45rem 0; cursor:pointer; box-shadow:0 3px 0 rgba(42,38,33,.6); transition:transform .06s, box-shadow .06s;}
+button.ox-cell:active{transform:translateY(3px); box-shadow:none;}
 .cx{display:flex; flex-direction:column; align-items:center; gap:.8rem; padding:.6rem 0;}
 .cx-demo{display:flex; gap:1.2rem; font:900 clamp(1.6rem,3.4vw,2.6rem) 'Merriweather',Georgia,serif; letter-spacing:.04em;}
 .cx-bar{display:flex; justify-content:space-between; width:min(30rem,100%); font:800 .9rem 'Inter',sans-serif; color:#4a4136;}
@@ -2873,7 +2879,7 @@ body{background:#211d18;}
   function fmtClock(ms){ var s=Math.ceil(ms/1000); return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); }
   // ── quick breaks: Reaction Tap + Stop the Clock. Everyone who plays gets the point;
   //    the class sees only averages and anonymous bests, never who was slow ──
-  var GAME_NAMES={w:'Word Puzzle', c:'Connections', m:'Match Up', r:'Reaction Tap', k:'Stop the Clock', f:'Flash Memory', s:'Speed Round', t:'Tic-Tac-Toe', x:'Color Clash', j:'Jelly Bean Jar'};
+  var GAME_NAMES={w:'Word Puzzle', c:'Connections', m:'Match Up', r:'Reaction Tap', k:'Stop the Clock', f:'Flash Memory', s:'Speed Round', t:'Tic-Tac-Toe', x:'Odd One Out', j:'Jelly Bean Jar'};
   var SK_TARGET=10000, SK_SHOW=3000, RT_TRIES=3, rtTimer=null, skLoop=null;
   // bonus: the top 10% of a quick break (fastest best tap / closest to 10 s) earn +1.
   // At least one student qualifies, and everyone tied at the cutoff counts.
@@ -3030,13 +3036,16 @@ body{background:#211d18;}
       + '<div class="rg-bk-sub">Closest to 10 <strong>'+secs(close)+' s</strong></div></div>';
   }
 
-  // ── Chapter 15 quick breaks: Color Clash (x) and Jelly Bean Jar (j) ──
-  var CX_MS=20000, CX_COL=[['RED','#b8322a'],['BLUE','#2f5fa8'],['GREEN','#3f7f3a'],['GOLD','#c08a12']], cxLoop=null;
+  // ── Chapter 15 quick breaks: Odd One Out (x) and Jelly Bean Jar (j) ──
+  var CX_MS=20000, OX_N=20, OX_P=[['O','Q'],['d','b'],['E','F'],['N','M'],['9','6'],['q','p'],['C','G'],['B','8'],['n','m'],['V','W'],['I','l'],['R','P']], cxLoop=null;
   function xjState(ty){ var pos=state.idx, gm=gameAt(pos); if(HOST||phase()!=='question'||!gm||gm.type!==ty) return null;
     var s=gmState(pos); return {pos:pos, gm:gm, s:s, locked:gmLocked(pos,s)}; }
-  function cxNew(s){ var w=Math.floor(Math.random()*4), c=w;
-    if(Math.random()<0.75){ while(c===w) c=Math.floor(Math.random()*4); }
-    if(s.xw===w && s.xc===c){ cxNew(s); return; } s.xw=w; s.xc=c; }
+  function cxNew(s){ var w=Math.floor(Math.random()*OX_P.length); if(w===s.xw) w=(w+1)%OX_P.length;
+    s.xw=w; s.xs=Math.random()<.5?1:0; s.xc=Math.floor(Math.random()*OX_N); }
+  function oxGrid(s, live){ var pr=OX_P[s.xw], crowd=pr[s.xs], odd=pr[1-s.xs], h='';
+    for(var i=0;i<OX_N;i++) h+= live ? '<button type="button" class="ox-cell" data-xc="'+i+'">'+(i===s.xc?odd:crowd)+'</button>' : '<span class="ox-cell">'+(i===s.xc?odd:crowd)+'</span>';
+    return '<div class="ox-grid'+(live&&s.xfb?' fb-'+s.xfb:'')+(live?'':' demo')+'">'+h+'</div>'; }
+  var OX_DEMO={xw:0, xs:0, xc:13};
   function cxStart(){ var b=xjState('x'); if(!b||b.locked||b.s.done||b.s.xrun) return; var s=b.s;
     s.xrun=1; s.xstart=Date.now(); s.xr=0; s.xx=0; s.xfb=''; cxNew(s); gmBump(b.pos); cxTick(); }
   function cxFinish(b){ var s=b.s; if(s.done) return; s.xrun=0; s.done=true; s.pts=BREAK_MAX;
@@ -3087,7 +3096,7 @@ body{background:#211d18;}
     if(gm.type==='x'){
       var sc=v.map(function(x){ return 1000-x; }), best=Math.max.apply(null,sc), avg=sc.reduce(function(a,b){ return a+b; },0)/sc.length, hi=Math.max(10, Math.ceil((best+1)/2)*2);
       return '<div class="rg-bk-res">'+xjHist(sc, 0, hi, Math.min(hi/2,12), null, function(x){ return Math.round(x); })
-        +'<div class="rg-bk-sub">Inks named correctly (right minus wrong) in 20 seconds. Class average <strong>'+avg.toFixed(1)+'</strong>, best <strong>'+best+'</strong>.</div></div>';
+        +'<div class="rg-bk-sub">Odd ones found (right minus wrong) in 20 seconds. Class average <strong>'+avg.toFixed(1)+'</strong>, best <strong>'+best+'</strong>.</div></div>';
     }
     var n=gm.n, s=v.slice().sort(function(a,b){ return a-b; }), med=s[Math.floor((s.length-1)/2)];
     var close=v.reduce(function(a,b){ return Math.abs(b-n)<Math.abs(a-n) ? b : a; });
@@ -3100,8 +3109,8 @@ body{background:#211d18;}
   function xjHostHTML(pos, rev){
     var gm=gameAt(pos), isX=gm.type==='x';
     var body = rev ? xjRevealHTML(pos)
-      : (isX ? '<div class="rg-gm-host"><div class="cx-demo"><span style="color:#2f5fa8">RED</span><span style="color:#3f7f3a">GOLD</span><span style="color:#b8322a">BLUE</span></div>'
-                 +'<div class="rg-gm-lead">Color Clash: tap the color of the INK, not the word, as many times as you can in 20 seconds.</div>'
+      : (isX ? '<div class="rg-gm-host">'+oxGrid(OX_DEMO,false)
+                 +'<div class="rg-gm-lead">Odd One Out: every grid hides one letter that doesn&#8217;t match. Find as many as you can in 20 seconds.</div>'
                : '<div class="rg-gm-host jb-host">'+jarSVG(gm)+'<div><div class="rg-gm-lead">Jelly Bean Jar: how many jelly beans are in the jar? Everyone sees the same jar.</div>')
         +'<div class="rg-cap">A quick break: everyone who plays gets a point, and the top 10% earn a bonus point.</div></div>'+(isX?'':'</div>');
     return body + '<div class="rg-gm-stat">Finished <strong data-gm-done>0</strong> of <span data-gm-n>0</span></div>';
@@ -3111,16 +3120,15 @@ body{background:#211d18;}
     if(gm.type==='x'){
       if(s.xrun && !s.done && Date.now()-s.xstart>=CX_MS){ var b0=xjState('x'); if(b0) setTimeout(function(){ cxFinish(b0); },0); }
       if(s.xrun && !s.done) setTimeout(cxTick, 0);
-      if(s.done){ body='<div class="cx"><div class="cx-word done">'+(s.xsc||0)+'</div><div class="cx-sub">'+(s.xr||0)+' right, '+(s.xx||0)+' wrong</div></div>';
-        msg='Your score: '+(s.xsc||0)+'. +1 point!'; }
-      else if(s.xrun){ var w=CX_COL[s.xw], c=CX_COL[s.xc];
-        body='<div class="cx"><div class="cx-bar"><span data-cx-left>'+Math.max(0,Math.ceil((CX_MS-(Date.now()-s.xstart))/1000))+' s</span><span>'+(s.xr||0)+' right'+(s.xx? ', '+s.xx+' wrong' : '')+'</span></div>'
-          +'<div class="cx-word'+(s.xfb?' fb-'+s.xfb:'')+'" style="color:'+c[1]+'">'+w[0]+'</div>'
-          +'<div class="cx-btns">'+CX_COL.map(function(k,i){ return '<button type="button" class="cx-btn" data-xc="'+i+'">'+k[0]+'</button>'; }).join('')+'</div></div>';
-        msg='Tap the color of the INK.'; }
-      else { body='<div class="cx"><div class="cx-demo"><span style="color:#2f5fa8">RED</span><span style="color:#3f7f3a">GOLD</span><span style="color:#b8322a">BLUE</span></div>'
+      if(s.done){ body='<div class="cx"><div class="cx-word done">'+(s.xsc||0)+'</div><div class="cx-sub">'+(s.xr||0)+' found, '+(s.xx||0)+' wrong</div></div>';
+        msg='You found '+(s.xsc||0)+'. +1 point!'; }
+      else if(s.xrun){
+        body='<div class="cx"><div class="cx-bar"><span data-cx-left>'+Math.max(0,Math.ceil((CX_MS-(Date.now()-s.xstart))/1000))+' s</span><span>'+(s.xr||0)+' found'+(s.xx? ', '+s.xx+' wrong' : '')+'</span></div>'
+          +oxGrid(s,true)+'</div>';
+        msg='Tap the one that doesn&#8217;t match.'; }
+      else { body='<div class="cx">'+oxGrid(OX_DEMO,false)
           +'<button class="rg-btn cx-go" data-act="xs"'+(locked?' disabled':'')+'>Start (20 seconds)</button></div>';
-        msg= locked ? 'Time’s up!' : 'A word appears in colored ink. Tap the INK color, not the word. Right answers count, wrong ones take a point back.'; }
+        msg= locked ? 'Time’s up!' : 'Each grid hides one letter that doesn’t match the rest. Tap it, and a new grid appears. Right answers count, wrong ones take a point back.'; }
     } else {
       var off= s.jg!=null ? Math.abs(s.jg-gm.n) : null;
       body='<div class="jb">'+jarSVG(gm)+'<div class="jb-side">'
@@ -4705,9 +4713,9 @@ show(start);
     myVote = (myVote===null||myVote==='') ? null : parseInt(myVote,10);
 
     function render(counts){
-      let total=0; for(let i=0;i<n;i++) total+=(counts[i]||0);
+      let total=0; for(let i=0;i<n;i++) total+=Math.max(0,counts[i]||0);   // clamp: a re-vote after a Reset can decrement a cleared count
       opts.forEach(function(b,i){
-        const c=counts[i]||0, pct=total?Math.round(c/total*100):0;
+        const c=Math.max(0,counts[i]||0), pct=total?Math.round(c/total*100):0;
         b.querySelector('.poll-opt-fill').style.width=(total?c/total*100:0)+'%';
         b.querySelector('.poll-opt-count').textContent=c+(c===1?' vote':' votes');
         b.querySelector('.poll-opt-pct').textContent=pct+'%';
@@ -5107,9 +5115,9 @@ show(start);
 
     function render(){
       const counts=state.counts||{}, released=!!state.released;
-      let total=0; for(let i=0;i<n;i++) total+=(counts[i]||0);
+      let total=0; for(let i=0;i<n;i++) total+=Math.max(0,counts[i]||0);   // clamp: a re-vote after a Reset can decrement a cleared count
       opts.forEach(function(b,i){
-        const c=counts[i]||0, pct=total?Math.round(c/total*100):0;
+        const c=Math.max(0,counts[i]||0), pct=total?Math.round(c/total*100):0;
         b.querySelector('.poll-opt-fill').style.width=(released&&total?c/total*100:0)+'%';
         b.querySelector('.poll-opt-count').textContent=c+(c===1?' vote':' votes');
         b.querySelector('.poll-opt-pct').textContent=pct+'%';
