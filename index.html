@@ -3037,7 +3037,7 @@ body{background:#211d18;}
   }
 
   // ── Chapter 15 quick breaks: Odd One Out (x) and Jelly Bean Jar (j) ──
-  var CX_MS=20000, OX_N=20, OX_P=[['O','Q'],['d','b'],['E','F'],['N','M'],['9','6'],['q','p'],['C','G'],['B','8'],['n','m'],['V','W'],['I','l'],['R','P']], cxLoop=null;
+  var CX_MS=20000, OX_N=20, OX_P=[['O','Q'],['d','b'],['E','F'],['N','M'],['9','6'],['q','p'],['C','G'],['B','8'],['n','m'],['V','W'],['R','P']], cxLoop=null;
   function xjState(ty){ var pos=state.idx, gm=gameAt(pos); if(HOST||phase()!=='question'||!gm||gm.type!==ty) return null;
     var s=gmState(pos); return {pos:pos, gm:gm, s:s, locked:gmLocked(pos,s)}; }
   function cxNew(s){ var w=Math.floor(Math.random()*OX_P.length); if(w===s.xw) w=(w+1)%OX_P.length;
